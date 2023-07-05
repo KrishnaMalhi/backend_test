@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from 'typeorm';
+import { MigrationInterface, QueryRunner, Table } from 'typeorm';
 
 export class CinemaSystem1663877813247 implements MigrationInterface {
   /**
@@ -31,8 +31,149 @@ export class CinemaSystem1663877813247 implements MigrationInterface {
    * As a cinema owner I dont want to configure the seating for every show
    */
   public async up(queryRunner: QueryRunner): Promise<void> {
-    throw new Error('TODO: implement migration in task 4');
+    await queryRunner.createTable(
+      new Table({
+        name: 'movies',
+        columns: [
+          {
+            name: 'id',
+            type: 'uuid',
+            isPrimary: true,
+            generationStrategy: 'increment',
+          },
+          { name: 'name', type: 'varchar' },
+        ],
+      }),
+    );
+
+    await queryRunner.createTable(
+      new Table({
+        name: 'shows',
+        columns: [
+          {
+            name: 'id',
+            type: 'uuid',
+            isPrimary: true,
+            generationStrategy: 'increment',
+          },
+          { name: 'movie_id', type: 'uuid' },
+          { name: 'start_time', type: 'timestamp' },
+        ],
+        foreignKeys: [
+          {
+            columnNames: ['movie_id'],
+            referencedTableName: 'movies',
+            referencedColumnNames: ['id'],
+            onDelete: 'CASCADE',
+          },
+        ],
+      }),
+    );
+
+    await queryRunner.createTable(
+      new Table({
+        name: 'cinemas',
+        columns: [
+          {
+            name: 'id',
+            type: 'uuid',
+            isPrimary: true,
+            generationStrategy: 'increment',
+          },
+          { name: 'name', type: 'varchar' },
+        ],
+      }),
+    );
+
+    await queryRunner.createTable(
+      new Table({
+        name: 'showrooms',
+        columns: [
+          {
+            name: 'id',
+            type: 'uuid',
+            isPrimary: true,
+            generationStrategy: 'increment',
+          },
+          { name: 'cinema_id', type: 'uuid' },
+          { name: 'name', type: 'varchar' },
+        ],
+        foreignKeys: [
+          {
+            columnNames: ['cinema_id'],
+            referencedTableName: 'cinemas',
+            referencedColumnNames: ['id'],
+            onDelete: 'CASCADE',
+          },
+        ],
+      }),
+    );
+
+    await queryRunner.createTable(
+      new Table({
+        name: 'pricing',
+        columns: [
+          {
+            name: 'id',
+            type: 'uuid',
+            isPrimary: true,
+            generationStrategy: 'increment',
+          },
+          { name: 'show_id', type: 'uuid' },
+          { name: 'seat_type', type: 'varchar' },
+          { name: 'price', type: 'decimal' },
+        ],
+        foreignKeys: [
+          {
+            columnNames: ['show_id'],
+            referencedTableName: 'shows',
+            referencedColumnNames: ['id'],
+            onDelete: 'CASCADE',
+          },
+        ],
+      }),
+    );
+
+    await queryRunner.createTable(
+      new Table({
+        name: 'seats',
+        columns: [
+          {
+            name: 'id',
+            type: 'uuid',
+            isPrimary: true,
+            generationStrategy: 'increment',
+          },
+          { name: 'show_id', type: 'uuid' },
+          { name: 'room_id', type: 'uuid' },
+          { name: 'seat_number', type: 'integer' },
+          { name: 'seat_type', type: 'varchar' },
+          { name: 'is_booked', type: 'boolean', default: false },
+        ],
+        foreignKeys: [
+          {
+            columnNames: ['show_id'],
+            referencedTableName: 'shows',
+            referencedColumnNames: ['id'],
+            onDelete: 'CASCADE',
+          },
+          {
+            columnNames: ['room_id'],
+            referencedTableName: 'showrooms',
+            referencedColumnNames: ['id'],
+            onDelete: 'CASCADE',
+          },
+        ],
+      }),
+    );
   }
 
-  public async down(queryRunner: QueryRunner): Promise<void> {}
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.dropTable('seats');
+    await queryRunner.dropTable('pricing');
+    await queryRunner.dropTable('showrooms');
+    await queryRunner.dropTable('cinemas');
+    await queryRunner.dropTable('shows');
+    await queryRunner.dropTable('movies');
+  }
 }
